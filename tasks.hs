@@ -63,19 +63,19 @@ cmdStop :: AppState -> UTCTime -> CommandOutput
 cmdStop (AppState (ATask startedTask) taskList) time = CommandOutput (AppState NoTask (taskList ++ [(CompletedTask startedTask time)])) ""
 
 cmdAbandon :: AppState -> UTCTime -> CommandOutput
-cmdAbandon (AppState (ATask startedTask) taskList) time = CommandOutput (AppState NoTask taskList) ""
+cmdAbandon (AppState (ATask _) taskList) time = CommandOutput (AppState NoTask taskList) ""
 
 cmdCurrent :: AppState -> UTCTime -> CommandOutput 
-cmdCurrent appState@(AppState (ATask startedTask) taskList) time = CommandOutput appState (show startedTask)
+cmdCurrent appState@(AppState (ATask startedTask) _) time = CommandOutput appState (show startedTask)
 
 cmdToday :: AppState -> UTCTime -> CommandOutput
-cmdToday (AppState currentTask taskList) (UTCTime day _) = CommandOutput (AppState currentTask taskList) (show $ tasksForDay day taskList)
+cmdToday appState@(AppState _ taskList) (UTCTime day _) = CommandOutput appState (show $ tasksForDay day taskList)
 
 cmdYesterday :: AppState -> UTCTime -> CommandOutput
-cmdYesterday (AppState currentTask taskList) (UTCTime day _) = CommandOutput (AppState currentTask taskList) (Data.List.intercalate "\n" $ Data.List.sort $ Data.List.nub [ d | (CompletedTask (StartedTask s d) e) <- (tasksForDay (addDays (-1) day) taskList) ])
+cmdYesterday appState@(AppState _ taskList) (UTCTime day _) = CommandOutput appState (Data.List.intercalate "\n" $ Data.List.sort $ Data.List.nub [ d | (CompletedTask (StartedTask s d) e) <- (tasksForDay (addDays (-1) day) taskList) ])
 
 cmdWorked :: AppState -> UTCTime -> CommandOutput
-cmdWorked (AppState currentTask taskList) (UTCTime day _) = CommandOutput (AppState currentTask taskList) (show $ durationHours $ tasksDuration (tasksForDay day taskList))
+cmdWorked appState@(AppState _ taskList) (UTCTime day _) = CommandOutput appState (show $ durationHours $ tasksDuration (tasksForDay day taskList))
 
 processCommand :: Command -> AppState -> CommandOutput
 processCommand (CommandStart time description) a = cmdStart a time description
