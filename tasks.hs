@@ -11,11 +11,7 @@ import Data.Maybe
 import qualified Data.ByteString
 import qualified Data.ByteString.Char8
 
-iso8601 :: UTCTime -> String
-iso8601 = formatTime defaultTimeLocale "%FT%T%QZ"
-
-fromISO8601 :: String -> Maybe UTCTime
-fromISO8601 = parseTime defaultTimeLocale "%FT%T%QZ"
+import DateHandling
 
 data StartedTask = StartedTask UTCTime String
   deriving Show
