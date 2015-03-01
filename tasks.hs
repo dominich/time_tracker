@@ -23,6 +23,7 @@ type TaskList = [CompletedTask]
 data AppState = AppState CurrentTask TaskList
 
 data Command = CommandStart UTCTime String
+             | CommandRename UTCTime String
              | CommandStop UTCTime
 	     | CommandAbandon UTCTime
 	     | CommandCurrent UTCTime
@@ -60,6 +61,9 @@ taskDescriptionsForOutput = (Data.List.intercalate "\n") . Data.List.sort . Data
 cmdStart :: AppState -> UTCTime -> String -> CommandOutput
 cmdStart (AppState NoTask taskList) time description = CommandOutput (AppState (ATask (StartedTask time description)) taskList) ""
 
+cmdRename :: AppState -> UTCTime -> String -> CommandOutput
+cmdRename (AppState (ATask (StartedTask startTime _)) taskList) time description = CommandOutput (AppState (ATask (StartedTask startTime description)) taskList) ""
+
 cmdStop :: AppState -> UTCTime -> CommandOutput
 cmdStop (AppState (ATask startedTask) taskList) time = CommandOutput (AppState NoTask (taskList ++ [(CompletedTask startedTask time)])) ""
 
@@ -80,6 +84,7 @@ cmdWorked appState@(AppState _ taskList) (UTCTime day _) = CommandOutput appStat
 
 processCommand :: Command -> AppState -> CommandOutput
 processCommand (CommandStart time description) a = cmdStart a time description
+processCommand (CommandRename time description) a = cmdRename a time description
 processCommand (CommandStop time) a = cmdStop a time
 processCommand (CommandAbandon time) a = cmdAbandon a time
 processCommand (CommandCurrent time) a = cmdCurrent a time
@@ -107,6 +112,7 @@ getCommandWithoutArgs _ _ = UnrecognizedCommand
 
 getCommandWithArgs :: UTCTime -> String -> [String] -> Command
 getCommandWithArgs time "start" args = CommandStart time (unwords args)
+getCommandWithArgs time "rename" args = CommandRename time (unwords args)
 
 -- Export
 
