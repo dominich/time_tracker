@@ -28,6 +28,7 @@ data Command = CommandStart UTCTime String
              | CommandAgain UTCTime
 	     | CommandAbandon UTCTime
 	     | CommandCurrent UTCTime
+	     | CommandLast UTCTime
 	     | CommandToday UTCTime
 	     | CommandYesterday UTCTime
 	     | CommandWorked UTCTime
@@ -54,6 +55,10 @@ tasksForDay day taskList = filter (taskForDay day) taskList
 
 lastCompletedTask :: TaskList -> CompletedTask
 lastCompletedTask taskList = last taskList
+
+-- Last N elelements of a list
+lastN' :: Int -> [a] -> [a]
+lastN' n x = reverse $ take n $ reverse x
 
 -- Command handling
  
@@ -83,6 +88,9 @@ cmdAbandon (AppState (ATask _) taskList) time = CommandOutput (AppState NoTask t
 cmdCurrent :: AppState -> UTCTime -> CommandOutput 
 cmdCurrent appState@(AppState (ATask startedTask) _) time = CommandOutput appState (show startedTask)
 
+cmdLast :: AppState -> UTCTime -> CommandOutput 
+cmdLast appState@(AppState _ taskList) _ = CommandOutput appState (Data.List.intercalate "\n" $ taskDescriptions $ lastN' 10 taskList)
+
 cmdToday :: AppState -> UTCTime -> CommandOutput
 cmdToday appState@(AppState _ taskList) (UTCTime day _) = CommandOutput appState (taskDescriptionsForOutput $ taskDescriptions (tasksForDay day taskList))
 
@@ -99,6 +107,7 @@ processCommand (CommandStop time) a = cmdStop a time
 processCommand (CommandAgain time) a = cmdAgain a time
 processCommand (CommandAbandon time) a = cmdAbandon a time
 processCommand (CommandCurrent time) a = cmdCurrent a time
+processCommand (CommandLast time) a = cmdLast a time
 processCommand (CommandToday time) a = cmdToday a time
 processCommand (CommandYesterday time) a = cmdYesterday a time
 processCommand (CommandWorked time) a = cmdWorked a time
@@ -118,6 +127,7 @@ getCommandWithoutArgs time "today" = CommandToday time
 getCommandWithoutArgs time "again" = CommandAgain time
 getCommandWithoutArgs time "abandon" = CommandAbandon time
 getCommandWithoutArgs time "current" = CommandCurrent time
+getCommandWithoutArgs time "last" = CommandLast time
 getCommandWithoutArgs time "yesterday" = CommandYesterday time
 getCommandWithoutArgs time "worked" = CommandWorked time
 getCommandWithoutArgs _ _ = UnrecognizedCommand
