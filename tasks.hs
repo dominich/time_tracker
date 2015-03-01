@@ -71,7 +71,7 @@ cmdStart :: AppState -> UTCTime -> String -> CommandOutput
 cmdStart (AppState NoTask taskList) time description = CommandOutput (AppState (ATask (StartedTask time description)) taskList) ""
 
 cmdRename :: AppState -> UTCTime -> String -> CommandOutput
-cmdRename (AppState (ATask (StartedTask startTime _)) taskList) time description = CommandOutput (AppState (ATask (StartedTask startTime description)) taskList) ""
+cmdRename (AppState (ATask (StartedTask startTime _)) taskList) _ description = CommandOutput (AppState (ATask (StartedTask startTime description)) taskList) ""
 
 cmdStop :: AppState -> UTCTime -> CommandOutput
 cmdStop (AppState (ATask startedTask) taskList) time = CommandOutput (AppState NoTask (taskList ++ [(CompletedTask startedTask time)])) ""
@@ -83,10 +83,10 @@ descriptionFromCompletedTask :: CompletedTask -> String
 descriptionFromCompletedTask (CompletedTask (StartedTask _ description) _) = description
 
 cmdAbandon :: AppState -> UTCTime -> CommandOutput
-cmdAbandon (AppState (ATask _) taskList) time = CommandOutput (AppState NoTask taskList) ""
+cmdAbandon (AppState (ATask _) taskList) _ = CommandOutput (AppState NoTask taskList) ""
 
 cmdCurrent :: AppState -> UTCTime -> CommandOutput 
-cmdCurrent appState@(AppState (ATask startedTask) _) time = CommandOutput appState (show startedTask)
+cmdCurrent appState@(AppState (ATask startedTask) _) _ = CommandOutput appState (show startedTask)
 
 cmdLast :: AppState -> UTCTime -> CommandOutput 
 cmdLast appState@(AppState _ taskList) _ = CommandOutput appState (Data.List.intercalate "\n" $ taskDescriptions $ lastN' 10 taskList)
