@@ -150,6 +150,10 @@ taskPartsFromString [startTime, endTime, description] = ((fromISO8601 startTime)
 taskFromParts :: (Maybe UTCTime, Maybe UTCTime, String) -> Maybe CompletedTask
 taskFromParts (Just startTime, Just endTime, description) = Just (CompletedTask (StartedTask startTime description) endTime)
 
+commandOutputWithNewLine :: String -> String
+commandOutputWithNewLine "" = ""
+commandOutputWithNewLine string = string ++ "\n"
+
 commandLoop :: AppState -> IO Bool
 commandLoop state = do
   putStr "> "
@@ -157,7 +161,7 @@ commandLoop state = do
   let tokens = words line
   currentTime <- getCurrentTime
   let (CommandOutput newState output) = processCommand (getCommand currentTime tokens) state
-  putStrLn $ output
+  putStr $ commandOutputWithNewLine output
   writeTaskFile $ taskListToString $ taskListFromAppState newState 
   commandLoop newState
 
