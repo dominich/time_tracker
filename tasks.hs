@@ -25,6 +25,7 @@ data AppState = AppState CurrentTask TaskList
 data Command = CommandStart UTCTime String
              | CommandRename UTCTime String
              | CommandStop UTCTime
+             | CommandAgain UTCTime
 	     | CommandAbandon UTCTime
 	     | CommandCurrent UTCTime
 	     | CommandToday UTCTime
@@ -51,6 +52,9 @@ taskForDay day (CompletedTask (StartedTask (UTCTime utcDay _ ) _) _) = utcDay ==
 tasksForDay :: Day -> TaskList -> [CompletedTask]
 tasksForDay day taskList = filter (taskForDay day) taskList
 
+lastCompletedTask :: TaskList -> CompletedTask
+lastCompletedTask taskList = last taskList
+
 -- Command handling
  
 taskDescriptions :: TaskList -> [String]
@@ -66,6 +70,12 @@ cmdRename (AppState (ATask (StartedTask startTime _)) taskList) time description
 
 cmdStop :: AppState -> UTCTime -> CommandOutput
 cmdStop (AppState (ATask startedTask) taskList) time = CommandOutput (AppState NoTask (taskList ++ [(CompletedTask startedTask time)])) ""
+
+cmdAgain :: AppState -> UTCTime -> CommandOutput
+cmdAgain (AppState NoTask taskList) time = CommandOutput (AppState (ATask (StartedTask time (descriptionFromCompletedTask $ lastCompletedTask taskList))) taskList) ""
+
+descriptionFromCompletedTask :: CompletedTask -> String
+descriptionFromCompletedTask (CompletedTask (StartedTask _ description) _) = description
 
 cmdAbandon :: AppState -> UTCTime -> CommandOutput
 cmdAbandon (AppState (ATask _) taskList) time = CommandOutput (AppState NoTask taskList) ""
@@ -86,6 +96,7 @@ processCommand :: Command -> AppState -> CommandOutput
 processCommand (CommandStart time description) a = cmdStart a time description
 processCommand (CommandRename time description) a = cmdRename a time description
 processCommand (CommandStop time) a = cmdStop a time
+processCommand (CommandAgain time) a = cmdAgain a time
 processCommand (CommandAbandon time) a = cmdAbandon a time
 processCommand (CommandCurrent time) a = cmdCurrent a time
 processCommand (CommandToday time) a = cmdToday a time
@@ -104,6 +115,7 @@ getCommand time (x:xs) = getCommandWithArgs time x xs
 getCommandWithoutArgs :: UTCTime -> String -> Command
 getCommandWithoutArgs time "stop" = CommandStop time
 getCommandWithoutArgs time "today" = CommandToday time
+getCommandWithoutArgs time "again" = CommandAgain time
 getCommandWithoutArgs time "abandon" = CommandAbandon time
 getCommandWithoutArgs time "current" = CommandCurrent time
 getCommandWithoutArgs time "yesterday" = CommandYesterday time
