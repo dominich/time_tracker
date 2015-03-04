@@ -87,6 +87,7 @@ cmdAbandon (AppState (ATask _) taskList) _ = CommandOutput (AppState NoTask task
 
 cmdCurrent :: AppState -> UTCTime -> CommandOutput 
 cmdCurrent appState@(AppState (ATask startedTask) _) _ = CommandOutput appState (show startedTask)
+cmdCurrent appState@(AppState NoTask _) _ = CommandOutput appState "No task"
 
 cmdLast :: AppState -> UTCTime -> CommandOutput 
 cmdLast appState@(AppState _ taskList) _ = CommandOutput appState (Data.List.intercalate "\n" $ taskDescriptions $ lastN' 10 taskList)
