@@ -72,20 +72,29 @@ taskSummaries = map taskSummary
 
 taskSummariesForOutput = (Data.List.intercalate "\n") . Data.List.sort . Data.List.nub
 
+-- TODO: Handle at a higher level.
+invalidStateChange :: AppState -> CommandOutput
+invalidStateChange appState = CommandOutput appState "invalid state change"
+
 cmdStart :: AppState -> UTCTime -> String -> CommandOutput
 cmdStart (AppState NoTask taskList) time description = CommandOutput (AppState (ATask (StartedTask time description)) taskList) ""
+cmdStart appState _ _ = invalidStateChange appState
 
 cmdRename :: AppState -> UTCTime -> String -> CommandOutput
 cmdRename (AppState (ATask (StartedTask startTime _)) taskList) _ description = CommandOutput (AppState (ATask (StartedTask startTime description)) taskList) ""
+cmdRename appState _ _ = invalidStateChange appState
 
 cmdStop :: AppState -> UTCTime -> CommandOutput
 cmdStop (AppState (ATask startedTask) taskList) time = CommandOutput (AppState NoTask (taskList ++ [(CompletedTask startedTask time)])) ""
+cmdStop appState _ = invalidStateChange appState
 
 cmdAgain :: AppState -> UTCTime -> CommandOutput
 cmdAgain (AppState NoTask taskList) time = CommandOutput (AppState (ATask (StartedTask time (descriptionFromCompletedTask $ lastCompletedTask taskList))) taskList) ""
+cmdAgain appState _ = invalidStateChange appState
 
 cmdAbandon :: AppState -> UTCTime -> CommandOutput
 cmdAbandon (AppState (ATask _) taskList) _ = CommandOutput (AppState NoTask taskList) ""
+cmdAbandon appState _ = invalidStateChange appState
 
 cmdCurrent :: AppState -> UTCTime -> CommandOutput 
 cmdCurrent appState@(AppState (ATask startedTask) _) _ = CommandOutput appState (show startedTask)
