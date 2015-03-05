@@ -65,10 +65,12 @@ lastN' n x = reverse $ take n $ reverse x
 descriptionFromCompletedTask :: CompletedTask -> String
 descriptionFromCompletedTask (CompletedTask (StartedTask _ description) _) = description
 
-taskDescriptions :: TaskList -> [String]
-taskDescriptions taskList = map descriptionFromCompletedTask taskList
+taskSummary :: CompletedTask -> String
+taskSummary completedTask = "[" ++ (show $ durationHours $ taskDuration completedTask) ++ "] " ++ descriptionFromCompletedTask completedTask
 
-taskDescriptionsForOutput = (Data.List.intercalate "\n") . Data.List.sort . Data.List.nub
+taskSummaries = map taskSummary
+
+taskSummariesForOutput = (Data.List.intercalate "\n") . Data.List.sort . Data.List.nub
 
 cmdStart :: AppState -> UTCTime -> String -> CommandOutput
 cmdStart (AppState NoTask taskList) time description = CommandOutput (AppState (ATask (StartedTask time description)) taskList) ""
@@ -90,13 +92,13 @@ cmdCurrent appState@(AppState (ATask startedTask) _) _ = CommandOutput appState 
 cmdCurrent appState@(AppState NoTask _) _ = CommandOutput appState "No task"
 
 cmdLast :: AppState -> UTCTime -> CommandOutput 
-cmdLast appState@(AppState _ taskList) _ = CommandOutput appState (Data.List.intercalate "\n" $ taskDescriptions $ lastN' 10 taskList)
+cmdLast appState@(AppState _ taskList) _ = CommandOutput appState (Data.List.intercalate "\n" $ taskSummaries $ lastN' 10 taskList)
 
 cmdToday :: AppState -> UTCTime -> CommandOutput
-cmdToday appState@(AppState _ taskList) (UTCTime day _) = CommandOutput appState (taskDescriptionsForOutput $ taskDescriptions (tasksForDay day taskList))
+cmdToday appState@(AppState _ taskList) (UTCTime day _) = CommandOutput appState (taskSummariesForOutput $ taskSummaries (tasksForDay day taskList))
 
 cmdYesterday :: AppState -> UTCTime -> CommandOutput
-cmdYesterday appState@(AppState _ taskList) (UTCTime day _) = CommandOutput appState (taskDescriptionsForOutput $ taskDescriptions (tasksForDay (addDays (-1) day) taskList))
+cmdYesterday appState@(AppState _ taskList) (UTCTime day _) = CommandOutput appState (taskSummariesForOutput $ taskSummaries (tasksForDay (addDays (-1) day) taskList))
 
 cmdWorked :: AppState -> UTCTime -> CommandOutput
 cmdWorked appState@(AppState _ taskList) (UTCTime day _) = CommandOutput appState (show $ durationHours $ tasksDuration (tasksForDay day taskList))
