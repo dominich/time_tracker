@@ -147,6 +147,7 @@ getCommandWithoutArgs _ _ = UnrecognizedCommand
 getCommandWithArgs :: UTCTime -> String -> [String] -> Command
 getCommandWithArgs time "start" args = CommandStart time (unwords args)
 getCommandWithArgs time "rename" args = CommandRename time (unwords args)
+getCommandWithArgs _ _ _ = UnrecognizedCommand
 
 -- Export
 
