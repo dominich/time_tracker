@@ -78,7 +78,7 @@ invalidStateChange appState = CommandOutput appState "invalid state change"
 
 cmdStart :: AppState -> UTCTime -> String -> CommandOutput
 cmdStart (AppState NoTask taskList) time description = CommandOutput (AppState (ATask (StartedTask time description)) taskList) ""
-cmdStart appState _ _ = invalidStateChange appState
+cmdStart (AppState (ATask startedTask) taskList) time description = CommandOutput (AppState (ATask (StartedTask time description)) (taskList ++ [(CompletedTask startedTask time)])) ""
 
 cmdRename :: AppState -> UTCTime -> String -> CommandOutput
 cmdRename (AppState (ATask (StartedTask startTime _)) taskList) _ description = CommandOutput (AppState (ATask (StartedTask startTime description)) taskList) ""
