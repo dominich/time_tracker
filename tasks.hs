@@ -62,8 +62,11 @@ lastN' n x = reverse $ take n $ reverse x
 
 -- Command handling
  
+descriptionFromCompletedTask :: CompletedTask -> String
+descriptionFromCompletedTask (CompletedTask (StartedTask _ description) _) = description
+
 taskDescriptions :: TaskList -> [String]
-taskDescriptions taskList = [ d | (CompletedTask (StartedTask s d) e) <- taskList]
+taskDescriptions taskList = map descriptionFromCompletedTask taskList
 
 taskDescriptionsForOutput = (Data.List.intercalate "\n") . Data.List.sort . Data.List.nub
 
@@ -78,9 +81,6 @@ cmdStop (AppState (ATask startedTask) taskList) time = CommandOutput (AppState N
 
 cmdAgain :: AppState -> UTCTime -> CommandOutput
 cmdAgain (AppState NoTask taskList) time = CommandOutput (AppState (ATask (StartedTask time (descriptionFromCompletedTask $ lastCompletedTask taskList))) taskList) ""
-
-descriptionFromCompletedTask :: CompletedTask -> String
-descriptionFromCompletedTask (CompletedTask (StartedTask _ description) _) = description
 
 cmdAbandon :: AppState -> UTCTime -> CommandOutput
 cmdAbandon (AppState (ATask _) taskList) _ = CommandOutput (AppState NoTask taskList) ""
