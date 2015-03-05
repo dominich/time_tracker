@@ -124,7 +124,7 @@ processCommand (CommandToday time) a = cmdToday a time
 processCommand (CommandYesterday time) a = cmdYesterday a time
 processCommand (CommandWorked time) a = cmdWorked a time
 processCommand NoCommand a = CommandOutput a ""
-processCommand UnrecognizedCommand a = CommandOutput a ""
+processCommand UnrecognizedCommand a = CommandOutput a "not recognised"
 
 -- Commands from string input
 
