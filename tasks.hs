@@ -1,6 +1,7 @@
 import Data.Time
 import qualified Data.List
 import Data.List.Split
+import qualified Data.Map as Map
 import System.IO
 import System.Directory  
 
@@ -16,7 +17,7 @@ import Data.Char (isSpace)
 import DateHandling
 
 data Issue = Issue Int | NoIssue
-  deriving Show
+  deriving (Eq, Show)
 data StartedTask = StartedTask UTCTime Issue String
   deriving Show
 data CompletedTask = CompletedTask StartedTask UTCTime
@@ -36,6 +37,7 @@ data Command = CommandStart UTCTime Issue String
 	     | CommandToday UTCTime
 	     | CommandYesterday UTCTime
 	     | CommandWorked UTCTime
+             | CommandSummarize UTCTime Issue
 	     | NoCommand
              | UnrecognizedCommand
 
@@ -57,13 +59,21 @@ durationToHoursHuman = realToDecimalPlaces 2 . ((1 / 3600) *)
 taskForDay :: Day -> CompletedTask -> Bool
 taskForDay day (CompletedTask (StartedTask (UTCTime utcDay _ ) _ _) _) = utcDay == day
 
+taskForIssue :: Issue -> CompletedTask -> Bool
+taskForIssue i (CompletedTask (StartedTask _ issue _) _) = issue == i
+
 -- Task list
 
 tasksForDay :: Day -> TaskList -> [CompletedTask]
 tasksForDay day taskList = filter (taskForDay day) taskList
 
+tasksForIssue :: Issue -> TaskList -> [CompletedTask]
+tasksForIssue issue taskList = filter (taskForIssue issue) taskList
+
 lastCompletedTask :: TaskList -> CompletedTask
 lastCompletedTask taskList = last taskList
+
+sortAndGroup assocs = Map.fromListWith (++) [(k, [v]) | (k, v) <- assocs]
 
 -- Last N elelements of a list
 lastN' :: Int -> [a] -> [a]
@@ -120,6 +130,12 @@ cmdYesterday appState@(AppState _ taskList) (UTCTime day _) = CommandOutput appS
 cmdWorked :: AppState -> UTCTime -> CommandOutput
 cmdWorked appState@(AppState _ taskList) (UTCTime day _) = CommandOutput appState (show $ durationToHoursHuman $ tasksDuration (tasksForDay day taskList))
 
+dayTaskPair task@(CompletedTask (StartedTask (UTCTime utcDay _) _ _) _) = (utcDay ,task) 
+
+cmdSummarize :: AppState -> UTCTime -> Issue -> CommandOutput
+cmdSummarize appState _ NoIssue = CommandOutput appState "no issue specified"
+cmdSummarize appState@(AppState _ taskList) _ issue = CommandOutput appState (show $ sortAndGroup $ map dayTaskPair (tasksForIssue issue taskList))
+
 processCommand :: Command -> AppState -> CommandOutput
 processCommand (CommandStart time issue description) a = cmdStart a time issue description
 processCommand (CommandRename time issue description) a = cmdRename a time issue description
@@ -131,6 +147,7 @@ processCommand (CommandLast time) a = cmdLast a time
 processCommand (CommandToday time) a = cmdToday a time
 processCommand (CommandYesterday time) a = cmdYesterday a time
 processCommand (CommandWorked time) a = cmdWorked a time
+processCommand (CommandSummarize time issue) a = cmdSummarize a time issue
 processCommand NoCommand a = CommandOutput a ""
 processCommand UnrecognizedCommand a = CommandOutput a "not recognised"
 
@@ -167,6 +184,9 @@ getCommandWithArgs time "start" args =
 getCommandWithArgs time "rename" args =
   let (issue, description) = issueFromStringArgs $ unwords args
   in CommandRename time issue description
+getCommandWithArgs time "summarize" args =
+  let (issue, description) = issueFromStringArgs $ unwords args
+  in CommandSummarize time issue
 getCommandWithArgs _ _ _ = UnrecognizedCommand
 
 -- Export
