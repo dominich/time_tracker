@@ -47,7 +47,10 @@ taskDuration :: CompletedTask -> NominalDiffTime
 taskDuration (CompletedTask (StartedTask startTime _ _) endTime) = endTime `diffUTCTime` startTime
 
 tasksDuration = (foldr (+) 0) . (map taskDuration)
-durationHours = ((1 / 3600) *)
+
+realToDecimalPlaces decimals real = (fromInteger $ round $ real * (10^decimals)) / (10.0^^decimals)
+
+durationToHoursHuman = realToDecimalPlaces 2 . ((1 / 3600) *)
 
 -- Task
 
@@ -69,7 +72,7 @@ lastN' n x = reverse $ take n $ reverse x
 -- Command handling
  
 taskSummary :: CompletedTask -> String
-taskSummary completedTask@(CompletedTask (StartedTask _ issue description) _)= "[" ++ (show $ durationHours $ taskDuration completedTask) ++ "] (" ++ show issue ++ ") " ++ description
+taskSummary completedTask@(CompletedTask (StartedTask _ issue description) _)= "[" ++ (show $ durationToHoursHuman $ taskDuration completedTask) ++ "] (" ++ show issue ++ ") " ++ description
 
 taskSummaries = map taskSummary
 
@@ -115,7 +118,7 @@ cmdYesterday :: AppState -> UTCTime -> CommandOutput
 cmdYesterday appState@(AppState _ taskList) (UTCTime day _) = CommandOutput appState (taskSummariesForOutput $ taskSummaries (tasksForDay (addDays (-1) day) taskList))
 
 cmdWorked :: AppState -> UTCTime -> CommandOutput
-cmdWorked appState@(AppState _ taskList) (UTCTime day _) = CommandOutput appState (show $ durationHours $ tasksDuration (tasksForDay day taskList))
+cmdWorked appState@(AppState _ taskList) (UTCTime day _) = CommandOutput appState (show $ durationToHoursHuman $ tasksDuration (tasksForDay day taskList))
 
 processCommand :: Command -> AppState -> CommandOutput
 processCommand (CommandStart time issue description) a = cmdStart a time issue description
