@@ -13,7 +13,9 @@ import qualified Data.ByteString.Char8
 
 import DateHandling
 
-data StartedTask = StartedTask UTCTime String
+data Issue = Issue Int | NoIssue
+  deriving Show
+data StartedTask = StartedTask UTCTime Issue String
   deriving Show
 data CompletedTask = CompletedTask StartedTask UTCTime
   deriving Show
@@ -22,8 +24,8 @@ data CurrentTask = NoTask
 type TaskList = [CompletedTask]
 data AppState = AppState CurrentTask TaskList
 
-data Command = CommandStart UTCTime String
-             | CommandRename UTCTime String
+data Command = CommandStart UTCTime Issue String
+             | CommandRename UTCTime Issue String
              | CommandStop UTCTime
              | CommandAgain UTCTime
 	     | CommandAbandon UTCTime
@@ -38,7 +40,7 @@ data Command = CommandStart UTCTime String
 data CommandOutput = CommandOutput AppState String
 
 taskDuration :: CompletedTask -> NominalDiffTime
-taskDuration (CompletedTask (StartedTask startTime _) endTime) = endTime `diffUTCTime` startTime
+taskDuration (CompletedTask (StartedTask startTime _ _) endTime) = endTime `diffUTCTime` startTime
 
 tasksDuration = (foldr (+) 0) . (map taskDuration)
 durationHours = ((1 / 3600) *)
@@ -46,7 +48,7 @@ durationHours = ((1 / 3600) *)
 -- Task
 
 taskForDay :: Day -> CompletedTask -> Bool
-taskForDay day (CompletedTask (StartedTask (UTCTime utcDay _ ) _) _) = utcDay == day
+taskForDay day (CompletedTask (StartedTask (UTCTime utcDay _ ) _ _) _) = utcDay == day
 
 -- Task list
 
@@ -63,7 +65,7 @@ lastN' n x = reverse $ take n $ reverse x
 -- Command handling
  
 descriptionFromCompletedTask :: CompletedTask -> String
-descriptionFromCompletedTask (CompletedTask (StartedTask _ description) _) = description
+descriptionFromCompletedTask (CompletedTask (StartedTask _ _ description) _) = description
 
 taskSummary :: CompletedTask -> String
 taskSummary completedTask = "[" ++ (show $ durationHours $ taskDuration completedTask) ++ "] " ++ descriptionFromCompletedTask completedTask
@@ -76,20 +78,22 @@ taskSummariesForOutput = (Data.List.intercalate "\n") . Data.List.sort . Data.Li
 invalidStateChange :: AppState -> CommandOutput
 invalidStateChange appState = CommandOutput appState "invalid state change"
 
-cmdStart :: AppState -> UTCTime -> String -> CommandOutput
-cmdStart (AppState NoTask taskList) time description = CommandOutput (AppState (ATask (StartedTask time description)) taskList) ""
-cmdStart (AppState (ATask startedTask) taskList) time description = CommandOutput (AppState (ATask (StartedTask time description)) (taskList ++ [(CompletedTask startedTask time)])) ""
+cmdStart :: AppState -> UTCTime -> Issue -> String -> CommandOutput
+cmdStart (AppState NoTask taskList) time issue description = CommandOutput (AppState (ATask (StartedTask time issue description)) taskList) ""
+cmdStart (AppState (ATask startedTask) taskList) time issue description = CommandOutput (AppState (ATask (StartedTask time issue description)) (taskList ++ [(CompletedTask startedTask time)])) ""
 
-cmdRename :: AppState -> UTCTime -> String -> CommandOutput
-cmdRename (AppState (ATask (StartedTask startTime _)) taskList) _ description = CommandOutput (AppState (ATask (StartedTask startTime description)) taskList) ""
-cmdRename appState _ _ = invalidStateChange appState
+cmdRename :: AppState -> UTCTime -> Issue -> String -> CommandOutput
+cmdRename (AppState (ATask (StartedTask startTime _ _)) taskList) _ issue description = CommandOutput (AppState (ATask (StartedTask startTime issue description)) taskList) ""
+cmdRename appState _ _ _ = invalidStateChange appState
 
 cmdStop :: AppState -> UTCTime -> CommandOutput
 cmdStop (AppState (ATask startedTask) taskList) time = CommandOutput (AppState NoTask (taskList ++ [(CompletedTask startedTask time)])) ""
 cmdStop appState _ = invalidStateChange appState
 
 cmdAgain :: AppState -> UTCTime -> CommandOutput
-cmdAgain (AppState NoTask taskList) time = CommandOutput (AppState (ATask (StartedTask time (descriptionFromCompletedTask $ lastCompletedTask taskList))) taskList) ""
+cmdAgain (AppState NoTask taskList) time =
+  let (CompletedTask (StartedTask _ issue description) _) = lastCompletedTask taskList
+  in CommandOutput (AppState (ATask (StartedTask time issue description)) taskList) ""
 cmdAgain appState _ = invalidStateChange appState
 
 cmdAbandon :: AppState -> UTCTime -> CommandOutput
@@ -113,8 +117,8 @@ cmdWorked :: AppState -> UTCTime -> CommandOutput
 cmdWorked appState@(AppState _ taskList) (UTCTime day _) = CommandOutput appState (show $ durationHours $ tasksDuration (tasksForDay day taskList))
 
 processCommand :: Command -> AppState -> CommandOutput
-processCommand (CommandStart time description) a = cmdStart a time description
-processCommand (CommandRename time description) a = cmdRename a time description
+processCommand (CommandStart time issue description) a = cmdStart a time issue description
+processCommand (CommandRename time issue description) a = cmdRename a time issue description
 processCommand (CommandStop time) a = cmdStop a time
 processCommand (CommandAgain time) a = cmdAgain a time
 processCommand (CommandAbandon time) a = cmdAbandon a time
@@ -144,16 +148,33 @@ getCommandWithoutArgs time "yesterday" = CommandYesterday time
 getCommandWithoutArgs time "worked" = CommandWorked time
 getCommandWithoutArgs _ _ = UnrecognizedCommand
 
+issueFromStringArgs :: String -> (Issue, String)
+issueFromStringArgs x = case (reads x :: [(Int, String)]) of
+                         []       -> (NoIssue, x)
+                         [(y, x)] -> (Issue y, x)
+
+issueFromString x = case (issueFromStringArgs x) of
+                      (issue, _) -> issue
+
 getCommandWithArgs :: UTCTime -> String -> [String] -> Command
-getCommandWithArgs time "start" args = CommandStart time (unwords args)
-getCommandWithArgs time "rename" args = CommandRename time (unwords args)
+getCommandWithArgs time "start" args = 
+  let (issue, description) = issueFromStringArgs $ unwords args
+  in CommandStart time issue description
+getCommandWithArgs time "rename" args =
+  let (issue, description) = issueFromStringArgs $ unwords args
+  in CommandRename time issue description
 getCommandWithArgs _ _ _ = UnrecognizedCommand
 
 -- Export
 
+issueToString :: Issue -> String
+issueToString NoIssue = ""
+
+issueToString (Issue x) = show x
+
 -- TODO: Change to instance
 taskToString :: CompletedTask -> String
-taskToString (CompletedTask (StartedTask startTime description) endTime) = iso8601 startTime ++ "|" ++ iso8601 endTime ++ "|" ++ description
+taskToString (CompletedTask (StartedTask startTime issue description) endTime) = iso8601 startTime ++ "|" ++ iso8601 endTime ++ "|" ++ issueToString issue ++ "|" ++ description
 
 taskListFromAppState :: AppState -> TaskList
 taskListFromAppState (AppState _ taskList) = taskList
@@ -167,11 +188,11 @@ taskFromString :: String -> Maybe CompletedTask
 taskFromString "" = Nothing
 taskFromString s = taskFromParts $ taskPartsFromString $ splitOn "|" s
 
-taskPartsFromString :: [String] -> (Maybe UTCTime, Maybe UTCTime, String)
-taskPartsFromString [startTime, endTime, description] = ((fromISO8601 startTime), (fromISO8601 endTime), description)
+taskPartsFromString :: [String] -> (Maybe UTCTime, Maybe UTCTime, String, String)
+taskPartsFromString [startTime, endTime, issueNumber, description] = ((fromISO8601 startTime), (fromISO8601 endTime), issueNumber, description)
 
-taskFromParts :: (Maybe UTCTime, Maybe UTCTime, String) -> Maybe CompletedTask
-taskFromParts (Just startTime, Just endTime, description) = Just (CompletedTask (StartedTask startTime description) endTime)
+taskFromParts :: (Maybe UTCTime, Maybe UTCTime, String, String) -> Maybe CompletedTask
+taskFromParts (Just startTime, Just endTime, issueNumber, description) = Just (CompletedTask (StartedTask startTime (issueFromString issueNumber) description) endTime)
 
 commandOutputWithNewLine :: String -> String
 commandOutputWithNewLine "" = ""
