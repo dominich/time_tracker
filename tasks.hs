@@ -11,6 +11,8 @@ import Data.Maybe
 import qualified Data.ByteString
 import qualified Data.ByteString.Char8
 
+import Data.Char (isSpace)
+
 import DateHandling
 
 data Issue = Issue Int | NoIssue
@@ -38,6 +40,8 @@ data Command = CommandStart UTCTime Issue String
              | UnrecognizedCommand
 
 data CommandOutput = CommandOutput AppState String
+
+ltrim = dropWhile isSpace
 
 taskDuration :: CompletedTask -> NominalDiffTime
 taskDuration (CompletedTask (StartedTask startTime _ _) endTime) = endTime `diffUTCTime` startTime
@@ -151,7 +155,7 @@ getCommandWithoutArgs _ _ = UnrecognizedCommand
 issueFromStringArgs :: String -> (Issue, String)
 issueFromStringArgs x = case (reads x :: [(Int, String)]) of
                          []       -> (NoIssue, x)
-                         [(y, x)] -> (Issue y, x)
+                         [(y, x)] -> (Issue y, ltrim x)
 
 issueFromString x = case (issueFromStringArgs x) of
                       (issue, _) -> issue
