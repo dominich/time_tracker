@@ -68,11 +68,8 @@ lastN' n x = reverse $ take n $ reverse x
 
 -- Command handling
  
-descriptionFromCompletedTask :: CompletedTask -> String
-descriptionFromCompletedTask (CompletedTask (StartedTask _ _ description) _) = description
-
 taskSummary :: CompletedTask -> String
-taskSummary completedTask = "[" ++ (show $ durationHours $ taskDuration completedTask) ++ "] " ++ descriptionFromCompletedTask completedTask
+taskSummary completedTask@(CompletedTask (StartedTask _ _ description) _)= "[" ++ (show $ durationHours $ taskDuration completedTask) ++ "] " ++ description
 
 taskSummaries = map taskSummary
 
