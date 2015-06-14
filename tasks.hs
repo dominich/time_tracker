@@ -3,7 +3,7 @@ import qualified Data.List
 import Data.List.Split
 import qualified Data.Map as Map
 import System.IO
-import System.Directory  
+import System.Directory
 
 import System.Locale (defaultTimeLocale)
 import Data.Time.Format (formatTime, parseTime)
@@ -82,7 +82,7 @@ lastN' :: Int -> [a] -> [a]
 lastN' n x = reverse $ take n $ reverse x
 
 -- Command handling
- 
+
 taskSummary :: CompletedTask -> String
 taskSummary completedTask@(CompletedTask (StartedTask _ issue description) _)= "[" ++ (show $ durationToHoursHuman $ taskDuration completedTask) ++ "] (" ++ show issue ++ ") " ++ description
 
@@ -116,11 +116,11 @@ cmdAbandon :: AppState -> UTCTime -> CommandOutput
 cmdAbandon (AppState (ATask _) taskList) _ = CommandOutput (AppState NoTask taskList) ""
 cmdAbandon appState _ = invalidStateChange appState
 
-cmdCurrent :: AppState -> UTCTime -> CommandOutput 
+cmdCurrent :: AppState -> UTCTime -> CommandOutput
 cmdCurrent appState@(AppState (ATask startedTask) _) _ = CommandOutput appState (show startedTask)
 cmdCurrent appState@(AppState NoTask _) _ = CommandOutput appState "No task"
 
-cmdLast :: AppState -> UTCTime -> CommandOutput 
+cmdLast :: AppState -> UTCTime -> CommandOutput
 cmdLast appState@(AppState _ taskList) _ = CommandOutput appState (Data.List.intercalate "\n" $ taskSummaries $ lastN' 10 taskList)
 
 cmdToday :: AppState -> UTCTime -> CommandOutput
@@ -132,7 +132,7 @@ cmdYesterday appState@(AppState _ taskList) (UTCTime day _) = CommandOutput appS
 cmdWorked :: AppState -> UTCTime -> CommandOutput
 cmdWorked appState@(AppState _ taskList) (UTCTime day _) = CommandOutput appState (show $ durationToHoursHuman $ tasksDuration (tasksForDay day taskList))
 
-dayTaskPair task@(CompletedTask (StartedTask (UTCTime utcDay _) _ _) _) = (utcDay ,task) 
+dayTaskPair task@(CompletedTask (StartedTask (UTCTime utcDay _) _ _) _) = (utcDay ,task)
 
 cmdSummarize :: AppState -> UTCTime -> Issue -> CommandOutput
 cmdSummarize appState _ NoIssue = CommandOutput appState "no issue specified"
@@ -172,7 +172,7 @@ processCommand UnrecognizedCommand a = CommandOutput a "not recognised"
 -- Commands from string input
 
 getCommand :: UTCTime -> [String] -> Command
-getCommand _ [] = NoCommand 
+getCommand _ [] = NoCommand
 getCommand time [cmd] = getCommandWithoutArgs time cmd
 getCommand time (x:xs) = getCommandWithArgs time x xs
 
@@ -196,7 +196,7 @@ issueFromString x = case (issueFromStringArgs x) of
                       (issue, _) -> issue
 
 getCommandWithArgs :: UTCTime -> String -> [String] -> Command
-getCommandWithArgs time "start" args = 
+getCommandWithArgs time "start" args =
   let (issue, description) = issueFromStringArgs $ unwords args
   in CommandStart time issue description
 getCommandWithArgs time "rename" args =
@@ -253,11 +253,11 @@ commandLoop state = do
   currentTime <- getCurrentTime
   let (CommandOutput newState output) = processCommand (getCommand currentTime tokens) state
   putStr $ commandOutputWithNewLine output
-  writeTaskFile $ taskListToString $ taskListFromAppState newState 
+  writeTaskFile $ taskListToString $ taskListFromAppState newState
   commandLoop newState
 
 loadTaskFile = do
-  byteContents <- Data.ByteString.readFile "tasks.db"  
+  byteContents <- Data.ByteString.readFile "tasks.db"
   return $ Data.ByteString.Char8.unpack byteContents
 
 loadCompletedTasks = do
@@ -270,10 +270,10 @@ loadCompletedTasks = do
 writeTaskFile :: String -> IO ()
 writeTaskFile taskData = do
   (tempName, tempHandle) <- openTempFile "." "temp"
-  hPutStr tempHandle taskData 
+  hPutStr tempHandle taskData
   hClose tempHandle
-  removeFile "tasks.db"  
-  renameFile tempName "tasks.db"  
+  removeFile "tasks.db"
+  renameFile tempName "tasks.db"
 
 main = do
   completedTasksFromFile <- loadCompletedTasks
