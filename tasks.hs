@@ -38,6 +38,7 @@ data Command = CommandStart UTCTime Issue String
              | CommandToday UTCTime
              | CommandYesterday UTCTime
              | CommandWorked UTCTime
+             | CommandWorkedThisWeek UTCTime
              | CommandSummarize UTCTime Issue
              | CommandSummarizeWeek UTCTime Int
              | NoCommand
@@ -132,6 +133,9 @@ cmdYesterday appState@(AppState _ taskList) (UTCTime day _) = CommandOutput appS
 cmdWorked :: AppState -> UTCTime -> CommandOutput
 cmdWorked appState@(AppState _ taskList) (UTCTime day _) = CommandOutput appState (show $ durationToHoursHuman $ tasksDuration (tasksForDay day taskList))
 
+cmdWorkedThisWeek :: AppState -> UTCTime -> CommandOutput
+cmdWorkedThisWeek appState@(AppState _ taskList) time = cmdSummarizeWeek appState time (weekFromDay $ utctDay time)
+
 dayTaskPair task@(CompletedTask (StartedTask (UTCTime utcDay _) _ _) _) = (utcDay ,task)
 
 cmdSummarize :: AppState -> UTCTime -> Issue -> CommandOutput
@@ -164,6 +168,7 @@ processCommand (CommandLast time) a = cmdLast a time
 processCommand (CommandToday time) a = cmdToday a time
 processCommand (CommandYesterday time) a = cmdYesterday a time
 processCommand (CommandWorked time) a = cmdWorked a time
+processCommand (CommandWorkedThisWeek time) a = cmdWorkedThisWeek a time
 processCommand (CommandSummarize time issue) a = cmdSummarize a time issue
 processCommand (CommandSummarizeWeek time weekNumber) a = cmdSummarizeWeek a time weekNumber
 processCommand NoCommand a = CommandOutput a ""
@@ -185,6 +190,7 @@ getCommandWithoutArgs time "current" = CommandCurrent time
 getCommandWithoutArgs time "last" = CommandLast time
 getCommandWithoutArgs time "yesterday" = CommandYesterday time
 getCommandWithoutArgs time "worked" = CommandWorked time
+getCommandWithoutArgs time "worked-this-week" = CommandWorkedThisWeek time
 getCommandWithoutArgs _ _ = UnrecognizedCommand
 
 issueFromStringArgs :: String -> (Issue, String)
