@@ -7,6 +7,7 @@ import System.Directory
 
 import System.Locale (defaultTimeLocale)
 import Data.Time.Format (formatTime, parseTime)
+import Data.Time.Calendar.WeekDate (toWeekDate)
 import Data.Maybe
 
 import qualified Data.ByteString
@@ -38,6 +39,7 @@ data Command = CommandStart UTCTime Issue String
 	     | CommandYesterday UTCTime
 	     | CommandWorked UTCTime
              | CommandSummarize UTCTime Issue
+             | CommandSummarizeWeek UTCTime Int
 	     | NoCommand
              | UnrecognizedCommand
 
@@ -136,6 +138,21 @@ cmdSummarize :: AppState -> UTCTime -> Issue -> CommandOutput
 cmdSummarize appState _ NoIssue = CommandOutput appState "no issue specified"
 cmdSummarize appState@(AppState _ taskList) _ issue = CommandOutput appState (show $ sortAndGroup $ map dayTaskPair (tasksForIssue issue taskList))
 
+cmdSummarizeWeek :: AppState -> UTCTime -> Int -> CommandOutput
+cmdSummarizeWeek appState@(AppState _ taskList) _ weekNumber = CommandOutput appState (show $ durationToHoursHuman $ tasksDuration (tasksForWeek weekNumber taskList))
+
+-- TODO: Tidy
+
+endDateForTask (CompletedTask _ endDate) = endDate
+
+tasksForWeek weekNumber = filter (\x -> (weekFromDay (utctDay $ endDateForTask x)) == weekNumber)
+
+weekFromDay day =
+  let (year, week, weekDay) = toWeekDate day
+  in week
+
+-- TODO: End
+
 processCommand :: Command -> AppState -> CommandOutput
 processCommand (CommandStart time issue description) a = cmdStart a time issue description
 processCommand (CommandRename time issue description) a = cmdRename a time issue description
@@ -148,6 +165,7 @@ processCommand (CommandToday time) a = cmdToday a time
 processCommand (CommandYesterday time) a = cmdYesterday a time
 processCommand (CommandWorked time) a = cmdWorked a time
 processCommand (CommandSummarize time issue) a = cmdSummarize a time issue
+processCommand (CommandSummarizeWeek time weekNumber) a = cmdSummarizeWeek a time weekNumber
 processCommand NoCommand a = CommandOutput a ""
 processCommand UnrecognizedCommand a = CommandOutput a "not recognised"
 
@@ -187,6 +205,11 @@ getCommandWithArgs time "rename" args =
 getCommandWithArgs time "summarize" args =
   let (issue, description) = issueFromStringArgs $ unwords args
   in CommandSummarize time issue
+getCommandWithArgs time "worked-week" args =
+  let weekNumber = case (reads (unwords args) :: [(Int, String)]) of
+                    [] -> 1
+                    [(y, x)] -> y
+  in CommandSummarizeWeek time weekNumber
 getCommandWithArgs _ _ _ = UnrecognizedCommand
 
 -- Export
