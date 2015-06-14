@@ -32,15 +32,15 @@ data Command = CommandStart UTCTime Issue String
              | CommandRename UTCTime Issue String
              | CommandStop UTCTime
              | CommandAgain UTCTime
-	     | CommandAbandon UTCTime
-	     | CommandCurrent UTCTime
-	     | CommandLast UTCTime
-	     | CommandToday UTCTime
-	     | CommandYesterday UTCTime
-	     | CommandWorked UTCTime
+             | CommandAbandon UTCTime
+             | CommandCurrent UTCTime
+             | CommandLast UTCTime
+             | CommandToday UTCTime
+             | CommandYesterday UTCTime
+             | CommandWorked UTCTime
              | CommandSummarize UTCTime Issue
              | CommandSummarizeWeek UTCTime Int
-	     | NoCommand
+             | NoCommand
              | UnrecognizedCommand
 
 data CommandOutput = CommandOutput AppState String
