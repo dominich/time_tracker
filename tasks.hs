@@ -89,7 +89,7 @@ taskSummary completedTask@(CompletedTask (StartedTask _ issue description) _)= "
 
 taskSummaries = map taskSummary
 
-taskSummariesForOutput = (Data.List.intercalate "\n") . Data.List.sort . Data.List.nub
+taskSummariesForOutput = (Data.List.intercalate "\n")
 
 -- TODO: Handle at a higher level.
 invalidStateChange :: AppState -> CommandOutput
