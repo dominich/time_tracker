@@ -5,7 +5,6 @@ import qualified Data.Map as Map
 import System.IO
 import System.Directory
 
-import System.Locale (defaultTimeLocale)
 import Data.Time.Format (formatTime, parseTime)
 import Data.Time.Calendar.WeekDate (toWeekDate)
 import Data.Maybe
