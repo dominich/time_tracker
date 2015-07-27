@@ -8,14 +8,16 @@ Create an empty database:
 
 Start program:
 
-    $ runhaskell tasks.hs
+    $ cabal sandbox init
+    $ cabal install
+    $ cabal run
 
 ## Commands
 
 **Logging tasks**
 
 * `start` starts a task, e.g.:
-        
+
         start Chat with Bob
 
     A task can be assigned to a case number by setting the first part of the description as a number:
