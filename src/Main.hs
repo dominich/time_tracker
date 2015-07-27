@@ -251,6 +251,7 @@ commandOutputWithNewLine string = string ++ "\n"
 commandLoop :: AppState -> IO Bool
 commandLoop state = do
   putStr "> "
+  hFlush stdout
   line <- getLine
   let tokens = words line
   currentTime <- getCurrentTime
