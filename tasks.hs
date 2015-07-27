@@ -136,11 +136,9 @@ cmdWorked appState@(AppState _ taskList) (UTCTime day _) = CommandOutput appStat
 cmdWorkedThisWeek :: AppState -> UTCTime -> CommandOutput
 cmdWorkedThisWeek appState@(AppState _ taskList) time = cmdSummarizeWeek appState time (weekFromDay $ utctDay time)
 
-dayTaskPair task@(CompletedTask (StartedTask (UTCTime utcDay _) _ _) _) = (utcDay ,task)
-
 cmdSummarize :: AppState -> UTCTime -> Issue -> CommandOutput
 cmdSummarize appState _ NoIssue = CommandOutput appState "no issue specified"
-cmdSummarize appState@(AppState _ taskList) _ issue = CommandOutput appState (show $ sortAndGroup $ map dayTaskPair (tasksForIssue issue taskList))
+cmdSummarize appState@(AppState _ taskList) _ issue = CommandOutput appState (show $ durationToHoursHuman $ tasksDuration (tasksForIssue issue taskList))
 
 cmdSummarizeWeek :: AppState -> UTCTime -> Int -> CommandOutput
 cmdSummarizeWeek appState@(AppState _ taskList) _ weekNumber = CommandOutput appState (show $ durationToHoursHuman $ tasksDuration (tasksForWeek weekNumber taskList))
