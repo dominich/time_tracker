@@ -179,16 +179,17 @@ getCommand time [cmd] = getCommandWithoutArgs time cmd
 getCommand time (x:xs) = getCommandWithArgs time x xs
 
 getCommandWithoutArgs :: UTCTime -> String -> Command
-getCommandWithoutArgs time "stop" = CommandStop time
-getCommandWithoutArgs time "today" = CommandToday time
-getCommandWithoutArgs time "again" = CommandAgain time
-getCommandWithoutArgs time "abandon" = CommandAbandon time
-getCommandWithoutArgs time "current" = CommandCurrent time
-getCommandWithoutArgs time "last" = CommandLast time
-getCommandWithoutArgs time "yesterday" = CommandYesterday time
-getCommandWithoutArgs time "worked" = CommandWorked time
-getCommandWithoutArgs time "worked-this-week" = CommandWorkedThisWeek time
-getCommandWithoutArgs _ _ = UnrecognizedCommand
+getCommandWithoutArgs time cmd = case cmd of
+  "stop"             -> CommandStop time
+  "today"            -> CommandToday time
+  "again"            -> CommandAgain time
+  "abandon"          -> CommandAbandon time
+  "current"          -> CommandCurrent time
+  "last"             -> CommandLast time
+  "yesterday"        -> CommandYesterday time
+  "worked"           -> CommandWorked time
+  "worked-this-week" -> CommandWorkedThisWeek time
+  _                  -> UnrecognizedCommand
 
 issueFromStringArgs :: String -> (Issue, String)
 issueFromStringArgs x = case (reads x :: [(Int, String)]) of
