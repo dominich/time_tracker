@@ -144,9 +144,8 @@ cmdSummarizeWeek appState@(AppState _ taskList) _ weekNumber = CommandOutput app
 
 -- TODO: Tidy
 
-endDateForTask (CompletedTask _ endDate) = endDate
-
 tasksForWeek weekNumber = filter (\x -> (weekFromDay (utctDay $ endDateForTask x)) == weekNumber)
+  where endDateForTask (CompletedTask _ endDate) = endDate
 
 weekFromDay day =
   let (year, week, weekDay) = toWeekDate day
