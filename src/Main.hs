@@ -40,6 +40,7 @@ data Command = CommandStart UTCTime Issue String
              | CommandWorkedThisWeek UTCTime
              | CommandSummarize UTCTime Issue
              | CommandSummarizeWeek UTCTime Int
+             | CommandShowWeek UTCTime
              | NoCommand
              | UnrecognizedCommand
 
@@ -142,6 +143,9 @@ cmdSummarize appState@(AppState _ taskList) _ issue = CommandOutput appState (sh
 cmdSummarizeWeek :: AppState -> UTCTime -> Int -> CommandOutput
 cmdSummarizeWeek appState@(AppState _ taskList) _ weekNumber = CommandOutput appState (show $ durationToHoursHuman $ tasksDuration (tasksForWeek weekNumber taskList))
 
+cmdShowWeek :: AppState -> UTCTime -> CommandOutput
+cmdShowWeek appState time = CommandOutput appState (show $ weekFromDay $ utctDay time)
+
 -- TODO: Tidy
 
 tasksForWeek weekNumber = filter (\x -> (weekFromDay (utctDay $ endDateForTask x)) == weekNumber)
@@ -167,6 +171,7 @@ processCommand (CommandWorked time) a = cmdWorked a time
 processCommand (CommandWorkedThisWeek time) a = cmdWorkedThisWeek a time
 processCommand (CommandSummarize time issue) a = cmdSummarize a time issue
 processCommand (CommandSummarizeWeek time weekNumber) a = cmdSummarizeWeek a time weekNumber
+processCommand (CommandShowWeek time) a = cmdShowWeek a time
 processCommand NoCommand a = CommandOutput a ""
 processCommand UnrecognizedCommand a = CommandOutput a "not recognised"
 
@@ -188,6 +193,7 @@ getCommandWithoutArgs time cmd = case cmd of
   "yesterday"        -> CommandYesterday time
   "worked"           -> CommandWorked time
   "worked-this-week" -> CommandWorkedThisWeek time
+  "week-number"      -> CommandShowWeek time
   _                  -> UnrecognizedCommand
 
 issueFromStringArgs :: String -> (Issue, String)
