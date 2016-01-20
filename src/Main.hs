@@ -32,6 +32,7 @@ data Command = CommandStart UTCTime Issue String
              | CommandStop UTCTime
              | CommandAgain UTCTime
              | CommandAbandon UTCTime
+             | CommandExtend UTCTime
              | CommandCurrent UTCTime
              | CommandLast UTCTime
              | CommandToday UTCTime
@@ -76,6 +77,8 @@ tasksForIssue issue taskList = filter (taskForIssue issue) taskList
 lastCompletedTask :: TaskList -> CompletedTask
 lastCompletedTask taskList = last taskList
 
+listWithoutLastElement xs = take (length xs - 1) xs
+
 sortAndGroup assocs = Map.fromListWith (++) [(k, [v]) | (k, v) <- assocs]
 
 -- Last N elelements of a list
@@ -116,6 +119,13 @@ cmdAgain appState _ = invalidStateChange appState
 cmdAbandon :: AppState -> UTCTime -> CommandOutput
 cmdAbandon (AppState (ATask _) taskList) _ = CommandOutput (AppState NoTask taskList) ""
 cmdAbandon appState _ = invalidStateChange appState
+
+-- Extends last task to end now.
+cmdExtend :: AppState -> UTCTime -> CommandOutput
+cmdExtend (AppState NoTask taskList) time =
+  let (CompletedTask startedTask _) = lastCompletedTask taskList
+  in CommandOutput (AppState NoTask (listWithoutLastElement taskList ++ [CompletedTask startedTask time])) ""
+cmdExtend appState _ = invalidStateChange appState
 
 cmdCurrent :: AppState -> UTCTime -> CommandOutput
 cmdCurrent appState@(AppState (ATask startedTask) _) _ = CommandOutput appState (show startedTask)
@@ -163,6 +173,7 @@ processCommand (CommandRename time issue description) a = cmdRename a time issue
 processCommand (CommandStop time) a = cmdStop a time
 processCommand (CommandAgain time) a = cmdAgain a time
 processCommand (CommandAbandon time) a = cmdAbandon a time
+processCommand (CommandExtend time) a = cmdExtend a time
 processCommand (CommandCurrent time) a = cmdCurrent a time
 processCommand (CommandLast time) a = cmdLast a time
 processCommand (CommandToday time) a = cmdToday a time
@@ -188,6 +199,7 @@ getCommandWithoutArgs time cmd = case cmd of
   "today"            -> CommandToday time
   "again"            -> CommandAgain time
   "abandon"          -> CommandAbandon time
+  "extend"           -> CommandExtend time
   "current"          -> CommandCurrent time
   "last"             -> CommandLast time
   "yesterday"        -> CommandYesterday time
