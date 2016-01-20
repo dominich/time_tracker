@@ -32,6 +32,7 @@ data Command = CommandStart UTCTime Issue String
              | CommandStop UTCTime
              | CommandAgain UTCTime
              | CommandAbandon UTCTime
+             | CommandReopen UTCTime
              | CommandExtend UTCTime
              | CommandCurrent UTCTime
              | CommandLast UTCTime
@@ -120,6 +121,13 @@ cmdAbandon :: AppState -> UTCTime -> CommandOutput
 cmdAbandon (AppState (ATask _) taskList) _ = CommandOutput (AppState NoTask taskList) ""
 cmdAbandon appState _ = invalidStateChange appState
 
+-- Reopens last task to continue work.
+cmdReopen :: AppState -> UTCTime -> CommandOutput
+cmdReopen (AppState NoTask taskList) time =
+  let (CompletedTask startedTask _) = lastCompletedTask taskList
+  in CommandOutput (AppState (ATask startedTask) (listWithoutLastElement taskList)) ""
+cmdReopen appState _ = invalidStateChange appState
+
 -- Extends last task to end now.
 cmdExtend :: AppState -> UTCTime -> CommandOutput
 cmdExtend (AppState NoTask taskList) time =
@@ -173,6 +181,7 @@ processCommand (CommandRename time issue description) a = cmdRename a time issue
 processCommand (CommandStop time) a = cmdStop a time
 processCommand (CommandAgain time) a = cmdAgain a time
 processCommand (CommandAbandon time) a = cmdAbandon a time
+processCommand (CommandReopen time) a = cmdReopen a time
 processCommand (CommandExtend time) a = cmdExtend a time
 processCommand (CommandCurrent time) a = cmdCurrent a time
 processCommand (CommandLast time) a = cmdLast a time
@@ -199,6 +208,7 @@ getCommandWithoutArgs time cmd = case cmd of
   "today"            -> CommandToday time
   "again"            -> CommandAgain time
   "abandon"          -> CommandAbandon time
+  "reopen"           -> CommandReopen time
   "extend"           -> CommandExtend time
   "current"          -> CommandCurrent time
   "last"             -> CommandLast time
