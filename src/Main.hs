@@ -176,24 +176,25 @@ weekFromDay day =
 -- TODO: End
 
 processCommand :: Command -> AppState -> CommandOutput
-processCommand (CommandStart time issue description) a = cmdStart a time issue description
-processCommand (CommandRename time issue description) a = cmdRename a time issue description
-processCommand (CommandStop time) a = cmdStop a time
-processCommand (CommandAgain time) a = cmdAgain a time
-processCommand (CommandAbandon time) a = cmdAbandon a time
-processCommand (CommandReopen time) a = cmdReopen a time
-processCommand (CommandExtend time) a = cmdExtend a time
-processCommand (CommandCurrent time) a = cmdCurrent a time
-processCommand (CommandLast time) a = cmdLast a time
-processCommand (CommandToday time) a = cmdToday a time
-processCommand (CommandYesterday time) a = cmdYesterday a time
-processCommand (CommandWorked time) a = cmdWorked a time
-processCommand (CommandWorkedThisWeek time) a = cmdWorkedThisWeek a time
-processCommand (CommandSummarize time issue) a = cmdSummarize a time issue
-processCommand (CommandSummarizeWeek time weekNumber) a = cmdSummarizeWeek a time weekNumber
-processCommand (CommandShowWeek time) a = cmdShowWeek a time
-processCommand NoCommand a = CommandOutput a ""
-processCommand UnrecognizedCommand a = CommandOutput a "not recognised"
+processCommand command a = case command of
+  (CommandStart time issue description) -> cmdStart a time issue description
+  (CommandRename time issue description) -> cmdRename a time issue description
+  (CommandStop time) -> cmdStop a time
+  (CommandAgain time) -> cmdAgain a time
+  (CommandAbandon time) -> cmdAbandon a time
+  (CommandReopen time) -> cmdReopen a time
+  (CommandExtend time) -> cmdExtend a time
+  (CommandCurrent time) -> cmdCurrent a time
+  (CommandLast time) -> cmdLast a time
+  (CommandToday time) -> cmdToday a time
+  (CommandYesterday time) -> cmdYesterday a time
+  (CommandWorked time) -> cmdWorked a time
+  (CommandWorkedThisWeek time) -> cmdWorkedThisWeek a time
+  (CommandSummarize time issue) -> cmdSummarize a time issue
+  (CommandSummarizeWeek time weekNumber) -> cmdSummarizeWeek a time weekNumber
+  (CommandShowWeek time) -> cmdShowWeek a time
+  NoCommand -> CommandOutput a ""
+  UnrecognizedCommand -> CommandOutput a "not recognised"
 
 -- Commands from string input
 
