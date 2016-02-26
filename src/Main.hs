@@ -8,6 +8,7 @@ import System.Directory
 import Data.Time.Format (formatTime, parseTime)
 import Data.Time.Calendar.WeekDate (toWeekDate)
 import Data.Maybe
+import Control.Monad
 
 import qualified Data.ByteString
 import qualified Data.ByteString.Char8
@@ -19,9 +20,9 @@ import DateHandling
 data Issue = Issue Int | NoIssue
   deriving (Eq, Show)
 data StartedTask = StartedTask UTCTime Issue String
-  deriving Show
+  deriving (Eq, Show)
 data CompletedTask = CompletedTask StartedTask UTCTime
-  deriving Show
+  deriving (Eq, Show)
 data CurrentTask = NoTask
                  | ATask StartedTask
 type TaskList = [CompletedTask]
@@ -286,7 +287,10 @@ commandLoop state = do
   currentTime <- getCurrentTime
   let (CommandOutput newState output) = processCommand (getCommand currentTime tokens) state
   putStr $ commandOutputWithNewLine output
-  writeTaskFile $ taskListToString $ taskListFromAppState newState
+
+  let previousTaskList = taskListFromAppState state
+  let newTaskList = taskListFromAppState newState
+  when (newTaskList /= previousTaskList) $ writeTaskFile $ taskListToString newTaskList
   commandLoop newState
 
 loadTaskFile = do
