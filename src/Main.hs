@@ -89,8 +89,11 @@ lastN' n x = reverse $ take n $ reverse x
 
 -- Command handling
 
+issueAndDescription :: Issue -> String -> String
+issueAndDescription issue description = "(" ++ show issue ++ ") " ++ description
+
 taskSummary :: CompletedTask -> String
-taskSummary completedTask@(CompletedTask (StartedTask _ issue description) _)= "[" ++ (show $ durationToHoursHuman $ taskDuration completedTask) ++ "] (" ++ show issue ++ ") " ++ description
+taskSummary completedTask@(CompletedTask (StartedTask _ issue description) _)= "[" ++ (show $ durationToHoursHuman $ taskDuration completedTask) ++ "] " ++ issueAndDescription issue description
 
 taskSummaries = map taskSummary
 
@@ -280,7 +283,8 @@ commandOutputWithNewLine string = string ++ "\n"
 
 commandLoop :: AppState -> IO Bool
 commandLoop state = do
-  putStr "> "
+  let (AppState currentTask _) = state
+  putStr $ (getPrompt currentTask) ++ " "
   hFlush stdout
   line <- getLine
   let tokens = words line
@@ -292,6 +296,13 @@ commandLoop state = do
   let newTaskList = taskListFromAppState newState
   when (newTaskList /= previousTaskList) $ writeTaskFile $ taskListToString newTaskList
   commandLoop newState
+
+getPrompt :: CurrentTask -> String
+getPrompt ct = case ct of
+                 NoTask -> ">"
+                 ATask t -> issueAndDescription issue description ++ ">"
+                            where
+                              (StartedTask _ issue description) = t
 
 loadTaskFile = do
   byteContents <- Data.ByteString.readFile "tasks.db"
