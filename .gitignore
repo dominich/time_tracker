@@ -1,5 +1,3 @@
+.stack-work/
 tasks.db
-.cabal-sandbox
-cabal.sandbox.config
-dist/
 .idea/

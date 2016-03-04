@@ -1,3 +1,7 @@
+module Main where
+
+import DateHandling
+
 import Data.Time
 import qualified Data.List
 import Data.List.Split
