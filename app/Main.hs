@@ -167,15 +167,24 @@ cmdSummarize appState _ NoIssue = CommandOutput appState "no issue specified"
 cmdSummarize appState@(AppState _ taskList) _ issue = CommandOutput appState (show $ durationToHoursHuman $ tasksDuration (tasksForIssue issue taskList))
 
 cmdSummarizeWeek :: AppState -> UTCTime -> Int -> CommandOutput
-cmdSummarizeWeek appState@(AppState _ taskList) _ weekNumber = CommandOutput appState (show $ durationToHoursHuman $ tasksDuration (tasksForWeek weekNumber taskList))
+cmdSummarizeWeek appState@(AppState _ taskList) time weekNumber = CommandOutput appState (show $ durationToHoursHuman $ tasksDuration (tasksForWeek weekNumber $ tasksForYear currentYear taskList))
+                                                                  where
+                                                                    currentYear = yearFromDay $ utctDay time
 
 cmdShowWeek :: AppState -> UTCTime -> CommandOutput
 cmdShowWeek appState time = CommandOutput appState (show $ weekFromDay $ utctDay time)
 
 -- TODO: Tidy
 
+tasksForYear year = filter (\x -> (yearFromDay (utctDay $ endDateForTask x)) == year)
+
 tasksForWeek weekNumber = filter (\x -> (weekFromDay (utctDay $ endDateForTask x)) == weekNumber)
-  where endDateForTask (CompletedTask _ endDate) = endDate
+
+endDateForTask (CompletedTask _ endDate) = endDate
+
+yearFromDay day =
+  let (year, week, weekDay) = toWeekDate day
+  in year
 
 weekFromDay day =
   let (year, week, weekDay) = toWeekDate day
