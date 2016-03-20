@@ -6,8 +6,7 @@ module Types (
 
 import Data.Time
 
-data Issue = Issue Int | NoIssue
-  deriving (Eq, Show)
+type Issue = Maybe Int
 data StartedTask = StartedTask UTCTime Issue String
   deriving (Eq, Show)
 data CompletedTask = CompletedTask StartedTask UTCTime

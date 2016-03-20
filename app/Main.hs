@@ -89,7 +89,11 @@ lastN' n x = reverse $ take n $ reverse x
 -- Command handling
 
 issueAndDescription :: Issue -> String -> String
-issueAndDescription issue description = "(" ++ show issue ++ ") " ++ description
+issueAndDescription issue description = "(" ++ humanIssue issue ++ ") " ++ description
+
+humanIssue :: Issue -> String
+humanIssue (Just n) = "Issue " ++ show n
+humanIssue Nothing = "No issue"
 
 taskSummary :: CompletedTask -> String
 taskSummary completedTask@(CompletedTask (StartedTask _ issue description) _)= "[" ++ (show $ durationToHoursHuman $ taskDuration completedTask) ++ "] " ++ issueAndDescription issue description
@@ -158,7 +162,7 @@ cmdWorkedThisWeek :: AppState -> UTCTime -> CommandOutput
 cmdWorkedThisWeek appState@(AppState _ taskList) time = cmdSummarizeWeek appState time (weekFromDay $ utctDay time)
 
 cmdSummarize :: AppState -> UTCTime -> Issue -> CommandOutput
-cmdSummarize appState _ NoIssue = CommandOutput appState "no issue specified"
+cmdSummarize appState _ Nothing = CommandOutput appState "no issue specified"
 cmdSummarize appState@(AppState _ taskList) _ issue = CommandOutput appState (show $ durationToHoursHuman $ tasksDuration (tasksForIssue issue taskList))
 
 cmdSummarizeWeek :: AppState -> UTCTime -> Int -> CommandOutput
@@ -233,8 +237,8 @@ getCommandWithoutArgs time cmd = case cmd of
 
 issueFromStringArgs :: String -> (Issue, String)
 issueFromStringArgs x = case (reads x :: [(Int, String)]) of
-                         []       -> (NoIssue, x)
-                         [(y, x)] -> (Issue y, ltrim x)
+                         []       -> (Nothing, x)
+                         [(y, x)] -> (Just y, ltrim x)
 
 issueFromString x = case (issueFromStringArgs x) of
                       (issue, _) -> issue
@@ -259,9 +263,9 @@ getCommandWithArgs _ _ _ = UnrecognizedCommand
 -- Export
 
 issueToString :: Issue -> String
-issueToString NoIssue = ""
+issueToString Nothing = ""
 
-issueToString (Issue x) = show x
+issueToString (Just x) = show x
 
 -- TODO: Change to instance
 taskToString :: CompletedTask -> String
