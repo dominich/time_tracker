@@ -7,7 +7,8 @@ module Types (
 import Data.Time
 
 type Issue = Maybe Int
-data StartedTask = StartedTask UTCTime Issue String
-  deriving (Eq, Show)
-data CompletedTask = CompletedTask StartedTask UTCTime
-  deriving (Eq, Show)
+data StartedTask = StartedTask { startTime :: UTCTime
+                               , issue :: Issue
+                               , description :: String } deriving (Eq, Show)
+data CompletedTask = CompletedTask { startedTask :: StartedTask
+                                   ,  endTime :: UTCTime } deriving (Eq, Show)

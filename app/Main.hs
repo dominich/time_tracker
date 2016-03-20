@@ -88,15 +88,15 @@ lastN' n x = reverse $ take n $ reverse x
 
 -- Command handling
 
-issueAndDescription :: Issue -> String -> String
-issueAndDescription issue description = "(" ++ humanIssue issue ++ ") " ++ description
+issueAndDescription :: StartedTask -> String
+issueAndDescription startedTask = "(" ++ (humanIssue $ issue startedTask) ++ ") " ++ (description startedTask)
 
 humanIssue :: Issue -> String
 humanIssue (Just n) = "Issue " ++ show n
 humanIssue Nothing = "No issue"
 
 taskSummary :: CompletedTask -> String
-taskSummary completedTask@(CompletedTask (StartedTask _ issue description) _)= "[" ++ (show $ durationToHoursHuman $ taskDuration completedTask) ++ "] " ++ issueAndDescription issue description
+taskSummary completedTask = "[" ++ (show $ durationToHoursHuman $ taskDuration completedTask) ++ "] " ++ (issueAndDescription $ startedTask completedTask)
 
 taskSummaries = map taskSummary
 
@@ -312,9 +312,7 @@ commandLoop state = do
 getPrompt :: CurrentTask -> String
 getPrompt ct = case ct of
                  NoTask -> ">"
-                 ATask t -> issueAndDescription issue description ++ ">"
-                            where
-                              (StartedTask _ issue description) = t
+                 ATask t -> issueAndDescription t ++ ">"
 
 loadTaskFile = do
   byteContents <- Data.ByteString.readFile "tasks.db"
