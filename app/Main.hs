@@ -20,13 +20,8 @@ import qualified Data.ByteString.Char8
 import Data.Char (isSpace)
 
 import DateHandling
+import Types
 
-data Issue = Issue Int | NoIssue
-  deriving (Eq, Show)
-data StartedTask = StartedTask UTCTime Issue String
-  deriving (Eq, Show)
-data CompletedTask = CompletedTask StartedTask UTCTime
-  deriving (Eq, Show)
 data CurrentTask = NoTask
                  | ATask StartedTask
 type TaskList = [CompletedTask]
