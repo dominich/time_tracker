@@ -14,8 +14,7 @@ import Data.Time.Calendar.WeekDate (toWeekDate)
 import Data.Maybe
 import Control.Monad
 
-import qualified Data.ByteString
-import qualified Data.ByteString.Char8
+import qualified Data.ByteString.Char8 as BC
 
 import Data.Char (isSpace)
 
@@ -315,8 +314,8 @@ getPrompt ct = case ct of
                  ATask t -> issueAndDescription t ++ ">"
 
 loadTaskFile = do
-  byteContents <- Data.ByteString.readFile "tasks.db"
-  return $ Data.ByteString.Char8.unpack byteContents
+  byteContents <- BC.readFile "tasks.db"
+  return $ BC.unpack byteContents
 
 loadCompletedTasks = do
   contents <- loadTaskFile
