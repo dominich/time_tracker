@@ -243,21 +243,22 @@ issueFromString x = case (issueFromStringArgs x) of
                       (issue, _) -> issue
 
 getCommandWithArgs :: UTCTime -> String -> [String] -> Command
-getCommandWithArgs time "start" args =
-  let (issue, description) = issueFromStringArgs $ unwords args
-  in CommandStart time issue description
-getCommandWithArgs time "rename" args =
-  let (issue, description) = issueFromStringArgs $ unwords args
-  in CommandRename time issue description
-getCommandWithArgs time "summarize" args =
-  let (issue, description) = issueFromStringArgs $ unwords args
-  in CommandSummarize time issue
-getCommandWithArgs time "worked-week" args =
-  let weekNumber = case (reads (unwords args) :: [(Int, String)]) of
-                    [] -> 1
-                    [(y, x)] -> y
-  in CommandSummarizeWeek time weekNumber
-getCommandWithArgs _ _ _ = UnrecognizedCommand
+getCommandWithArgs time command args = case command of
+  "start" ->
+    let (issue, description) = issueFromStringArgs $ unwords args
+    in CommandStart time issue description
+  "rename" ->
+    let (issue, description) = issueFromStringArgs $ unwords args
+    in CommandRename time issue description
+  "summarize" ->
+    let (issue, description) = issueFromStringArgs $ unwords args
+    in CommandSummarize time issue
+  "worked-week" ->
+    let weekNumber = case (reads (unwords args) :: [(Int, String)]) of
+                   [] -> 1
+                   [(y, x)] -> y
+    in CommandSummarizeWeek time weekNumber
+  _ -> UnrecognizedCommand
 
 -- Export
 
